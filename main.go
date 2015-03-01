@@ -4,6 +4,7 @@ import (
 	irc "github.com/fluffle/goirc/client"
 	"flag"
 	"fmt"
+	"os"
 )
 
 func main() {
@@ -28,15 +29,18 @@ func main() {
 
 	ircConn.HandleFunc("connected", func(conn *irc.Conn, line *irc.Line) {
 		conn.Privmsg(targetNick, message)
+		defer os.Exit(0)
 		quit <- true
 	})
 	ircConn.HandleFunc("disconnected", func(conn *irc.Conn, line *irc.Line) {
+		defer os.Exit(1)
 		quit <- true
 	})
 
 	err := ircConn.ConnectTo(serverAddress)
 	if err != nil {
-		fmt.Println("Error:" + err.Error())
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		defer os.Exit(1)
 		return
 	}
 
